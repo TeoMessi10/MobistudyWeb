@@ -1,7 +1,7 @@
 <template>
   <q-dialog ref="dialog" @hide="onDialogHide" :maximized="maximizedToggle">
 
-    <q-card class="q-dialog-plugin">
+    <q-card style="width: 70vw;">
       <q-bar class="my-q-bar bg-primary">
         <div class="text-h6 text-white text-bold text-uppercase">
           <span>{{ taskName }}</span>

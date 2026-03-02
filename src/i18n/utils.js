@@ -25,29 +25,3 @@ export function taskTypeToString (taskType) {
   }
   return taskType.charAt(0).toUpperCase() + taskType.slice(1)
 }
-
-export function signalToString (signal) {
-  if (signal === 'steps') {
-    return 'Steps'
-  } else if (signal === 'activeMinutes') {
-    return 'Active Minutes'
-  } else if (signal === 'exerciseMinutes') {
-    return 'Exercise Minutes'
-  } else if (signal === 'distance') {
-    return 'Distance (meters)'
-  }
-  return signal.charAt(0).toUpperCase() + signal.slice(1)
-}
-
-export function signalToUnitString (signal) {
-  if (signal === 'steps') {
-    return 'steps'
-  } else if (signal === 'activeMinutes') {
-    return 'minutes'
-  } else if (signal === 'exerciseMinutes') {
-    return 'minutes'
-  } else if (signal === 'distance') {
-    return 'meters'
-  }
-  return ''
-}

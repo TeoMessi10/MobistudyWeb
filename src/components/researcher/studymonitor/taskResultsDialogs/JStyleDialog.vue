@@ -1,7 +1,7 @@
 <template>
   <q-dialog ref="dialog" @hide="onDialogHide" :maximized="maximizedToggle">
 
-    <q-card class="q-dialog-plugin">
+    <q-card>
       <q-bar class="my-q-bar bg-primary">
         <div class="text-h6 text-white text-bold text-uppercase">
           <span>{{ taskName }}</span>
@@ -274,8 +274,6 @@ export default {
       // TODO: mark sleep periods using annotations
       // see https://www.chartjs.org/chartjs-plugin-annotation/latest/
 
-      // TODO: add days separators using annotations
-
       this.timeChartData.datasets[0] = {
         label: 'Heart rate',
         data: taskData.hr.map(item => ({
@@ -329,7 +327,6 @@ export default {
       }
 
       const dateToDaryString = (d) => {
-        console.log('DATE', d)
         return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
       }
 

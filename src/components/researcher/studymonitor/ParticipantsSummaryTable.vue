@@ -16,6 +16,11 @@
       <q-checkbox label="Only preferred participants" v-model="filter.preferredOnly" @input="updateFilter()" />
     </template>
 
+    <template #body-cell-acceptedTS="props">
+      <q-td :props="props">
+        {{ onlyDate(props.value) }}
+      </q-td>
+    </template>
     <template #body-cell-lastTaskDate="props">
       <q-td :props="props">
         {{ niceTimestamp(props.value) }}
@@ -51,7 +56,7 @@ export default {
       columns: [
         { name: 'data', required: false, label: '', align: 'center', field: 'data', sortable: false },
         { name: 'FullName', required: true, label: 'Full Name', align: 'center', field: 'fullName', sortable: false, format: (value, row) => `${row.name} ${row.surname}` },
-        { name: 'DOB', required: true, label: 'Birthdate', align: 'center', field: 'DOB', sortable: false },
+        { name: 'acceptedTS', required: true, label: 'Started', align: 'center', field: 'acceptedTS', sortable: false },
         { name: 'userEmail', required: true, label: 'Email', align: 'center', field: 'userEmail', sortable: false },
         { name: 'status', required: true, label: 'Status', align: 'center', field: 'status', sortable: false },
         { name: 'taskResultCount', required: true, label: 'Task Count', align: 'center', field: 'taskResultCount', sortable: false },
@@ -88,6 +93,9 @@ export default {
     }
   },
   methods: {
+    onlyDate (timeStamp) {
+      return date.formatDate(timeStamp, 'YYYY-MM-DD')
+    },
     niceTimestamp (timeStamp) {
       return date.formatDate(timeStamp, 'YYYY-MM-DD HH:mm:ss')
     },
