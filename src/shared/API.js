@@ -354,5 +354,17 @@ export default {
   // Test stuff
   async sendTestEmail (email, subject, content) {
     return axios.post(BASE_URL + '/techadmin/sendemail/', { address: email, subject, content }, axiosConfig)
+  },
+  async getTaskResultsIndicatorsProducers () {
+    const resp = await axios.get(BASE_URL + '/taskResultsIndicators/producers', axiosConfig)
+    return resp.data
+  },
+  async getStudiesWithTaskResultsIndicatorsProducer (producer) {
+    const resp = await axios.get(BASE_URL + '/taskResultsIndicators/studiesWithProducer/' + producer, axiosConfig)
+    return resp.data
+  },
+  async runTaskResultsIndicatorsProducer (producer, studyKey, taskId) {
+    const resp = await axios.post(BASE_URL + '/taskResultsIndicators/runProducer/' + producer + '/' + studyKey + '/' + taskId, null, axiosConfig)
+    return resp.data
   }
 }

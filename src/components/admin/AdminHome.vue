@@ -1,37 +1,14 @@
 <template>
   <q-page>
-    <q-tabs
-      v-model="tab"
-      class="bg-secondary text-grey-5 shadow-2"
-      switch-indicator
-      active-color="white"
-      align="justify"
-    >
-      <q-tab
-        name="tab-logs"
-        icon="format_align_justify"
-        label="Logs"
-      />
-      <q-tab
-        name="tab-teams"
-        icon="group"
-        label="Teams"
-      />
-      <q-tab
-        name="tab-studies"
-        icon="local_library"
-        label="Studies"
-      />
-      <q-tab
-        name="tab-users"
-        icon="person"
-        label="Users"
-      />
-      <q-tab
-        name="tab-tester"
-        icon="verified_user"
-        label="Tests"
-      />
+    <q-tabs v-model="tab" class="bg-secondary text-grey-5 shadow-2" switch-indicator active-color="white"
+      align="justify">
+      <q-tab name="tab-logs" icon="format_align_justify" label="Logs" />
+      <q-tab name="tab-users" icon="person" label="Users" />
+      <q-tab name="tab-teams" icon="group" label="Teams" />
+      <q-tab name="tab-studies" icon="local_library" label="Studies" />
+      <q-tab name="tab-indicators" icon="manage_history" label="Indicators" />
+
+      <q-tab name="tab-tester" icon="verified_user" label="Tests" />
     </q-tabs>
     <q-tab-panels v-model="tab">
       <q-tab-panel name="tab-logs">
@@ -40,11 +17,7 @@
 
       <q-tab-panel name="tab-teams">
         <new-team-card @newTeam="refreshTeams()" />
-        <teams-invitations-card
-          ref="invitations"
-          @teamDeleted="refreshStudies()"
-          class="q-mt-md"
-        />
+        <teams-invitations-card ref="invitations" @teamDeleted="refreshStudies()" class="q-mt-md" />
       </q-tab-panel>
 
       <q-tab-panel name="tab-studies">
@@ -53,6 +26,10 @@
 
       <q-tab-panel name="tab-users">
         <users-table />
+      </q-tab-panel>
+
+      <q-tab-panel name="tab-indicators">
+        <task-results-indicators-card />
       </q-tab-panel>
 
       <q-tab-panel name="tab-tester">
@@ -75,6 +52,7 @@ import TeamsInvitationsCard from '@components/admin/TeamsInvitationsCard'
 import EmailTesterCard from '@components/admin/EmailTesterCard'
 import UsersTable from '@components/admin/UsersTable.vue'
 import StudiesTable from '@components/admin/StudiesTable.vue'
+import TaskResultsIndicatorsCard from '@components/admin/TaskResultsIndicatorsCard.vue'
 
 export default {
   name: 'AdminHomePage',
@@ -84,7 +62,8 @@ export default {
     TeamsInvitationsCard,
     EmailTesterCard,
     UsersTable,
-    StudiesTable
+    StudiesTable,
+    TaskResultsIndicatorsCard
   },
   data () {
     return {

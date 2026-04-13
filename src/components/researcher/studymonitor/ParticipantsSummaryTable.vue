@@ -56,9 +56,9 @@ export default {
       columns: [
         { name: 'data', required: false, label: '', align: 'center', field: 'data', sortable: false },
         { name: 'FullName', required: true, label: 'Full Name', align: 'center', field: 'fullName', sortable: false, format: (value, row) => `${row.name} ${row.surname}` },
-        { name: 'acceptedTS', required: true, label: 'Started', align: 'center', field: 'acceptedTS', sortable: false },
         { name: 'userEmail', required: true, label: 'Email', align: 'center', field: 'userEmail', sortable: false },
         { name: 'status', required: true, label: 'Status', align: 'center', field: 'status', sortable: false },
+        { name: 'acceptedTS', required: true, label: 'Started', align: 'center', field: 'acceptedTS', sortable: false },
         { name: 'taskResultCount', required: true, label: 'Task Count', align: 'center', field: 'taskResultCount', sortable: false },
         { name: 'lastTaskDate', required: true, label: 'Last task', align: 'center', field: 'lastTaskDate', sortable: false },
         { name: 'preferred', required: true, label: 'Preferred', align: 'center', field: 'isPreferred', sortable: false }
