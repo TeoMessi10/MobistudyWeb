@@ -105,6 +105,60 @@
 
       <!-- Activity & Progression -->
       <q-tab-panel name="activity" class="q-pa-none">
+
+        <!-- Stats overview cards (customizable, 4 slots) -->
+        <div v-if="selectedStatKeys.length" class="stats-grid q-pa-md">
+          <q-card
+            v-for="(card, idx) in statCardDefs"
+            :key="card.key"
+            flat bordered
+            class="stat-card"
+            :class="card.isAlert ? 'stat-card--alert' : ''"
+          >
+            <q-card-section class="q-pa-md">
+              <div class="row justify-between items-start q-mb-sm">
+                <div class="stat-icon-wrap" :class="card.isAlert ? 'stat-icon-wrap--alert' : 'stat-icon-wrap--default'">
+                  <q-icon :name="card.icon" size="18px" :color="card.isAlert ? 'negative' : 'secondary'" />
+                </div>
+                <div class="stat-trend-badge" :class="card.trendBadgeClass">
+                  <q-icon :name="trendIconName(card.trend)" size="12px" />
+                </div>
+              </div>
+              <div class="stat-value">{{ card.value }}</div>
+              <div class="stat-label">{{ card.label }}</div>
+              <div class="stat-footer row justify-between items-center">
+                <span>{{ card.footer }}</span>
+                <!-- Per-card picker: replace this slot with another metric -->
+                <q-btn flat round dense icon="tune" size="xs" color="grey-5">
+                  <q-menu>
+                    <div class="q-pa-sm text-caption text-grey-6">Replace card</div>
+                    <q-list dense style="min-width: 200px">
+                      <q-item
+                        v-for="k in availableStatMetrics"
+                        :key="k"
+                        clickable
+                        dense
+                        v-close-popup
+                        :active="card.key === k"
+                        active-class="text-secondary"
+                        @click="setStatCard(idx, k)"
+                      >
+                        <q-item-section>
+                          <q-item-label>{{ allMetricData[k]?.label || k }}</q-item-label>
+                          <q-item-label caption class="text-grey-5">{{ displayValue(k) }}</q-item-label>
+                        </q-item-section>
+                        <q-item-section side>
+                          <q-icon v-if="card.key === k" name="check" size="14px" color="secondary" />
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+
         <div class="row no-wrap items-start">
 
           <!-- Left: scrollable activity log -->
@@ -273,6 +327,12 @@ export default {
       availableMetrics: [],
       selectedMetrics: [],
 
+      // all raw task results (used for stats cards)
+      allTaskResults: [],
+
+      // which 4 keys to show in the stat cards (customizable, persisted)
+      selectedStatKeys: [],
+
       // tab navigation
       activeTab: 'activity'
     }
@@ -283,6 +343,26 @@ export default {
         key: k,
         label: this.allMetricData[k]?.label || k
       }))
+    },
+    // All metric keys available for stat cards (includes virtual __tasks_completed)
+    availableStatMetrics () {
+      return [...this.availableMetrics, '__tasks_completed'].filter(k => this.allMetricData[k])
+    },
+    // Display-ready configs for the 4 selected stat cards
+    statCardDefs () {
+      return this.selectedStatKeys.map(key => {
+        const m = this.allMetricData[key]
+        return {
+          key,
+          label: m ? m.label : key,
+          value: m ? this.displayValue(key) : '—',
+          icon: m?.icon || 'show_chart',
+          trend: m?.trend || 'stable',
+          isAlert: m?.isPain && m.value >= 5,
+          trendBadgeClass: this._statTrendBadgeClass(key),
+          footer: m ? this._statCardFooter(key) : 'No data yet'
+        }
+      })
     }
   },
   async created () {
@@ -354,6 +434,7 @@ export default {
         const allTaskIds = this.studyDescription.tasks.map(t => t.id)
         const allResults = await API.getTasksResults(this.studyKey, this.userKey, allTaskIds)
         if (!allResults || !Array.isArray(allResults) || allResults.length === 0) return
+        this.allTaskResults = allResults
 
         // ── Collect time-series per metric key ──────────────────────────
         const collections = {}
@@ -412,19 +493,49 @@ export default {
           isPain: false
         }
 
+        // ── Tasks completed (virtual metric for stat cards) ─────────────
+        const discarded = allResults.filter(r => r.discarded).length
+        newData.__tasks_completed = {
+          label: 'Tasks Completed',
+          value: completed,
+          unit: ` / ${allResults.length}`,
+          icon: 'checklist',
+          iconColor: '',
+          trend: adherenceTrend,
+          isPain: false,
+          _discarded: discarded
+        }
+
         this.allMetricData = newData
         const available = Object.keys(newData)
-        this.availableMetrics = available
+        this.availableMetrics = available.filter(k => k !== '__tasks_completed')
 
-        // ── Load saved selection (fall back to all available) ───────────
+        // ── Load saved header-chip selection ────────────────────────────
         const storageKey = `header-metrics-${this.studyKey}-${this.userKey}`
         try {
           const saved = JSON.parse(localStorage.getItem(storageKey))
           this.selectedMetrics = Array.isArray(saved)
-            ? saved.filter(k => available.includes(k)).slice(0, 4)
-            : available.slice(0, 4)
+            ? saved.filter(k => this.availableMetrics.includes(k)).slice(0, 4)
+            : this.availableMetrics.slice(0, 4)
         } catch {
-          this.selectedMetrics = [...available]
+          this.selectedMetrics = [...this.availableMetrics]
+        }
+
+        // ── Load saved stat-card selection ──────────────────────────────
+        const statStorageKey = `stat-cards-${this.studyKey}-${this.userKey}`
+        const defaultStatKeys = [
+          'adherence',
+          available.find(k => this.allMetricData[k]?.isPain) || '__tasks_completed',
+          available.find(k => k === 'po60__hr') || available.find(k => !this.allMetricData[k]?.isPain && k !== 'adherence' && k !== '__tasks_completed') || 'adherence',
+          '__tasks_completed'
+        ].filter((k, i, arr) => arr.indexOf(k) === i).slice(0, 4)
+        try {
+          const savedStat = JSON.parse(localStorage.getItem(statStorageKey))
+          this.selectedStatKeys = Array.isArray(savedStat)
+            ? savedStat.filter(k => available.includes(k)).slice(0, 4)
+            : defaultStatKeys
+        } catch {
+          this.selectedStatKeys = defaultStatKeys
         }
       } catch (err) {
         console.error('Cannot load header metrics:', err)
@@ -472,6 +583,35 @@ export default {
         ? m.value.toFixed(1)
         : m.value
       return `${v}${m.unit}`
+    },
+    _statTrendBadgeClass (key) {
+      const m = this.allMetricData[key]
+      if (!m) return 'stat-trend-badge--stable'
+      if (m.isPain) return m.trend === 'up' ? 'stat-trend-badge--up-alert' : m.trend === 'down' ? 'stat-trend-badge--down-good' : 'stat-trend-badge--stable'
+      if (key === 'adherence') return m.trend === 'up' ? 'stat-trend-badge--up-good' : m.trend === 'down' ? 'stat-trend-badge--down-bad' : 'stat-trend-badge--stable'
+      return m.trend === 'up' ? 'stat-trend-badge--up-good' : m.trend === 'down' ? 'stat-trend-badge--down-bad' : 'stat-trend-badge--stable'
+    },
+    _statCardFooter (key) {
+      const m = this.allMetricData[key]
+      if (!m) return 'No data yet'
+      if (key === '__tasks_completed') return `${m._discarded} discarded`
+      if (key === 'adherence') {
+        const map = { up: 'Improving vs prev. period', down: 'Declining vs prev. period', stable: 'Stable' }
+        return map[m.trend] || 'Stable'
+      }
+      if (m.isPain) {
+        const map = { up: 'Worsening trend', down: 'Improving trend', stable: 'Stable' }
+        return map[m.trend] || 'Stable'
+      }
+      const map = { up: 'Increasing', down: 'Decreasing', stable: 'Stable' }
+      return map[m.trend] || 'Stable'
+    },
+    setStatCard (idx, newKey) {
+      this.selectedStatKeys.splice(idx, 1, newKey)
+      localStorage.setItem(
+        `stat-cards-${this.studyKey}-${this.userKey}`,
+        JSON.stringify(this.selectedStatKeys)
+      )
     },
     toggleMetric (key) {
       const idx = this.selectedMetrics.indexOf(key)
@@ -652,6 +792,68 @@ export default {
   overflow: visible !important;
 }
 
+/* ── Stats overview grid ───────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-color: #e5e7eb !important;
+  border-radius: 6px !important;
+}
+
+.stat-card--alert {
+  border-color: #fecaca !important;
+  background: rgba(254, 242, 242, 0.4) !important;
+}
+
+.stat-icon-wrap {
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.stat-icon-wrap--default { background: rgba(95, 141, 152, 0.1); }
+.stat-icon-wrap--alert   { background: rgba(239, 68, 68, 0.1); }
+
+.stat-trend-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.stat-trend-badge--up-good   { background: #dcfce7; color: #16a34a; }
+.stat-trend-badge--down-bad  { background: #fef3c7; color: #b45309; }
+.stat-trend-badge--down-good { background: #dcfce7; color: #16a34a; }
+.stat-trend-badge--up-alert  { background: #fee2e2; color: #dc2626; }
+.stat-trend-badge--stable    { background: #f3f4f6; color: #6b7280; }
+
+.stat-value {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin-top: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.stat-footer {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* ── Activity / Progression columns ────────────────────────────────── */
 .activity-log-col {
   padding: 16px;
   min-width: 0;
