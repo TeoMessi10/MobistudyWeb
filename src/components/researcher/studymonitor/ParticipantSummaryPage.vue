@@ -75,6 +75,11 @@
             </q-btn>
           </template>
         </div>
+        <div v-if="participant.dateOfBirth || participant.sex" class="patient-meta">
+          <span v-if="participant.dateOfBirth">{{ new Date(participant.dateOfBirth).toLocaleDateString('sv-SE') }}</span>
+          <span v-if="participant.dateOfBirth && participant.sex"> · </span>
+          <span v-if="participant.sex">{{ participant.sex }}</span>
+        </div>
       </q-toolbar-title>
       <q-btn round color="black" icon="close" @click="closeTab()" />
     </q-toolbar>
@@ -90,8 +95,8 @@
         class="tab-nav-tabs"
       >
         <q-tab name="activity" icon="ssid_chart" label="Activity & Progression" />
-        <q-tab name="notes" icon="sticky_note_2" label="Clinical Notes" />
-        <q-tab name="external" icon="link" label="External Systems" />
+        <q-tab name="notes" icon="sticky_note_2" label="Clinical Notes" disable />
+        <q-tab name="external" icon="link" label="External Systems" disable />
       </q-tabs>
     </div>
 
@@ -152,23 +157,8 @@
         </div>
       </q-tab-panel>
 
-      <!-- Clinical Notes -->
-      <q-tab-panel name="notes">
-        <div class="placeholder-panel">
-          <q-icon name="sticky_note_2" size="48px" color="grey-4" />
-          <div class="text-h6 text-grey-5 q-mt-md">Clinical Notes</div>
-          <div class="text-body2 text-grey-5">Coming soon</div>
-        </div>
-      </q-tab-panel>
-
-      <!-- External Systems -->
-      <q-tab-panel name="external">
-        <div class="placeholder-panel">
-          <q-icon name="link" size="48px" color="grey-4" />
-          <div class="text-h6 text-grey-5 q-mt-md">External Systems</div>
-          <div class="text-body2 text-grey-5">Coming soon</div>
-        </div>
-      </q-tab-panel>
+      <!-- Clinical Notes — not yet implemented -->
+      <!-- External Systems — not yet implemented -->
 
     </q-tab-panels>
 
@@ -676,15 +666,6 @@ export default {
   align-self: flex-start;
 }
 
-.placeholder-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  opacity: 0.6;
-}
-
 .patient-toolbar {
   min-height: 90px;
   padding: 0 28px;
@@ -700,6 +681,12 @@ export default {
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.65);
   white-space: nowrap;
+}
+
+.patient-meta {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 2px;
 }
 
 .patient-divider {
