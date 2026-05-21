@@ -55,7 +55,7 @@
 
         <!-- Stats overview cards (customizable, 4 slots) -->
         <div v-if="selectedStatKeys.length" class="q-pa-lg">
-          <div class="row q-col-gutter-md">
+          <div class="row q-col-gutter-md items-stretch">
             <div v-for="(card, idx) in statCardDefs" :key="card.key" class="col-3">
               <q-card flat bordered class="stat-card fit" :class="card.isAlert ? 'stat-card--alert' : ''">
                 <q-card-section class="q-pa-md">
@@ -64,8 +64,12 @@
                       :class="card.isAlert ? 'stat-icon-wrap--alert' : 'stat-icon-wrap--default'">
                       <q-icon :name="card.icon" size="18px" :color="card.isAlert ? 'negative' : 'secondary'" />
                     </div>
-                    <div class="stat-trend-badge" :class="card.trendBadgeClass">
-                      <q-icon :name="card.trendIcon" size="12px" />
+                    <div class="row items-center no-wrap q-gutter-x-xs">
+                      <div class="stat-trend-badge" :class="card.trendBadgeClass">
+                        <q-icon :name="card.trendIcon" size="12px" />
+                      </div>
+                      <q-btn v-if="selectedStatKeys.length > 1" flat round dense icon="close" size="xs" color="grey-8"
+                        @click="removeStatCard(idx)" />
                     </div>
                   </div>
                   <div class="stat-value">{{ card.value }}</div>
@@ -94,6 +98,14 @@
                       </q-menu>
                     </q-btn>
                   </div>
+                </q-card-section>
+              </q-card>
+            </div>
+            <!-- Add card placeholder -->
+            <div v-if="canAddStatCard" class="col-3">
+              <q-card flat bordered class="stat-card-add fit" @click="addStatCard">
+                <q-card-section class="column items-center justify-center fit q-pa-md">
+                  <q-icon name="add" size="28px" color="grey-5" />
                 </q-card-section>
               </q-card>
             </div>
@@ -228,6 +240,10 @@ export default {
     availableStatTrends () {
       return this.availableTrends.filter(k => this.allTrendData[k])
     },
+    canAddStatCard () {
+      return this.selectedStatKeys.length < 4 &&
+        this.availableStatTrends.some(k => !this.selectedStatKeys.includes(k))
+    },
     slotColClass () {
       // Single chart fills the row; 2–4 charts each take half on desktop
       // (col-md-6) and stack on narrow viewports (col-12).
@@ -341,13 +357,12 @@ export default {
       this.allTrendData = allTrendData
       this.availableTrends = availableTrends
       const statStorageKey = `stat-cards-${this.studyKey}-${this.userKey}`
-      const defaultStatKeys = availableTrends.slice(0, 4)
+      const defaultStatKeys = availableTrends.slice(0, 1)
       try {
         const saved = JSON.parse(localStorage.getItem(statStorageKey))
-        if (Array.isArray(saved)) {
+        if (Array.isArray(saved) && saved.length) {
           const valid = saved.filter(k => availableTrends.includes(k)).slice(0, 4)
-          const extras = availableTrends.filter(k => !valid.includes(k))
-          this.selectedStatKeys = [...valid, ...extras].slice(0, 4)
+          this.selectedStatKeys = valid.length ? valid : defaultStatKeys
         } else {
           this.selectedStatKeys = defaultStatKeys
         }
@@ -373,6 +388,24 @@ export default {
     },
     setStatCard (idx, newKey) {
       this.selectedStatKeys.splice(idx, 1, newKey)
+      localStorage.setItem(
+        `stat-cards-${this.studyKey}-${this.userKey}`,
+        JSON.stringify(this.selectedStatKeys)
+      )
+    },
+    addStatCard () {
+      if (!this.canAddStatCard) return
+      const next = this.availableStatTrends.find(k => !this.selectedStatKeys.includes(k))
+      if (!next) return
+      this.selectedStatKeys.push(next)
+      localStorage.setItem(
+        `stat-cards-${this.studyKey}-${this.userKey}`,
+        JSON.stringify(this.selectedStatKeys)
+      )
+    },
+    removeStatCard (idx) {
+      if (this.selectedStatKeys.length <= 1) return
+      this.selectedStatKeys.splice(idx, 1)
       localStorage.setItem(
         `stat-cards-${this.studyKey}-${this.userKey}`,
         JSON.stringify(this.selectedStatKeys)
@@ -589,6 +622,21 @@ export default {
 .stat-card--alert {
   border-color: #fecaca !important;
   background: rgba(254, 242, 242, 0.4) !important;
+}
+
+.stat-card-add {
+  background: #f3f4f6;
+  border-color: #d1d5db !important;
+  border-style: dashed !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 100%;
+}
+
+.stat-card-add:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af !important;
 }
 
 .stat-icon-wrap {
