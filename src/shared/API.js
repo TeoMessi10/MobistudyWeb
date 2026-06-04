@@ -355,6 +355,50 @@ export default {
   async sendTestEmail (email, subject, content) {
     return axios.post(BASE_URL + '/techadmin/sendemail/', { address: email, subject, content }, axiosConfig)
   },
+  // NOTES (clinical notes about a participant)
+  /**
+   * Get all clinical notes for a participant in a study, newest first.
+   * @param {string} studyKey - The study the notes belong to
+   * @param {string} participantUserKey - The participant (user key) the notes are about
+   * @param {number} [offset] - Optional pagination offset
+   * @param {number} [count] - Optional pagination count
+   * @returns {Promise<Array<Object>|{ totalCount: number, subset: Array<Object> }>}
+   */
+  async getNotes (studyKey, participantUserKey, offset, count) {
+    const newOpts = { ...axiosConfig, params: { offset, count } }
+    const resp = await axios.get(BASE_URL + `/notes/${studyKey}/${participantUserKey}`, newOpts)
+    return resp.data
+  },
+  /**
+   * Create a clinical note. The backend sets author and timestamps from the
+   * logged-in user, so only studyKey, participantUserKey and text are sent.
+   * @param {string} studyKey - The study the note belongs to
+   * @param {string} participantUserKey - The participant the note is about
+   * @param {string} text - The note text
+   * @returns {Promise<Object>} - The created note (incl. _key and timestamps)
+   */
+  async createNote (studyKey, participantUserKey, text) {
+    const resp = await axios.post(BASE_URL + '/notes', { studyKey, participantUserKey, text }, axiosConfig)
+    return resp.data
+  },
+  /**
+   * Update the text of a note. Only the author (or admin) is allowed.
+   * @param {string} noteKey - The note _key
+   * @param {string} text - The new text
+   * @returns {Promise<Object>} - The updated note
+   */
+  async updateNote (noteKey, text) {
+    const resp = await axios.patch(BASE_URL + '/notes/' + noteKey, { text }, axiosConfig)
+    return resp.data
+  },
+  /**
+   * Delete a note. Only the author (or admin) is allowed.
+   * @param {string} noteKey - The note _key
+   * @returns {Promise} - A promise that resolves when the note is deleted
+   */
+  async deleteNote (noteKey) {
+    return axios.delete(BASE_URL + '/notes/' + noteKey, axiosConfig)
+  },
   async getTaskResultsIndicatorsProducers () {
     const resp = await axios.get(BASE_URL + '/taskResultsIndicators/producers', axiosConfig)
     return resp.data

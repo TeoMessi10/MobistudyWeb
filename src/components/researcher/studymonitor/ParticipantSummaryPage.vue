@@ -165,7 +165,11 @@
         <participant-activity-log :study-key="studyKey" :user-key="userKey" :study-description="studyDescription" />
       </q-tab-panel>
 
-      <!-- Clinical Notes — not yet implemented -->
+      <!-- Clinical Notes -->
+      <q-tab-panel name="notes" class="q-pa-none">
+        <notes-tab :study-key="studyKey" :user-key="userKey" />
+      </q-tab-panel>
+
       <!-- External Systems — not yet implemented -->
 
     </q-tab-panels>
@@ -181,6 +185,7 @@ import { taskTypeToString } from '@i18n/utils'
 import TaskProgressionCharts from './TaskProgressionCharts.vue'
 import PatientTrends from './PatientTrends.vue'
 import ParticipantActivityLog from './ParticipantActivityLog.vue'
+import NotesTab from './NotesTab.vue'
 import { listSignalsForTask, describeSignal } from './signalCatalog.js'
 
 // Upper bound on how many metrics can be compared in a single chart slot
@@ -193,7 +198,8 @@ export default {
   components: {
     TaskProgressionCharts,
     PatientTrends,
-    ParticipantActivityLog
+    ParticipantActivityLog,
+    NotesTab
   },
   data () {
     return {
